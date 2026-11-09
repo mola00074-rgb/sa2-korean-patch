@@ -32,6 +32,14 @@ Steam판 **Sonic Adventure 2** 를 위한 비공식 한글 패치입니다.
 3. 게임 **런처(Launcher.exe)** 의 설정에서 **텍스트 언어(Text Language)를 「日本語(일본어)」** 로 바꿉니다.
    한글은 일본어 텍스트 자리에 들어가 있습니다. 음성 언어는 영어·일본어 아무거나 괜찮습니다.
 
+### 스위치 Pro 컨트롤러로 플레이한다면
+`install.bat` 대신 **`install_switch.bat`** 을 실행하세요.
+- 힌트·설명 문장의 버튼 이름을 스위치식으로 바꿉니다: LT/RT → ZL/ZR, START → +, Xbox 360 컨트롤러 → Pro 컨트롤러
+- 액션 창의 Xbox 빨간 B 아이콘을 스위치 스타일 B 아이콘으로 바꿉니다.
+- Steam 설정 → 컨트롤러 → **「Nintendo 버튼 배치 사용」을 켠 상태** 기준입니다. 이때 A/B/X/Y는 버튼에 적힌 글자 그대로 맞습니다.
+- 다시 Xbox 표기로 돌아가려면 `install.bat` 을 실행하면 됩니다.
+- 메인 메뉴·옵션 화면의 버튼 그림(`newMenu.pak`, `options.pak`)은 아직 바꾸지 않았습니다.
+
 ### 3. 제거
 - `uninstall.bat` 실행 → 원본 메시지 파일을 백업에서 되돌립니다.
 - 그다음 Steam 라이브러리에서 게임 우클릭 → **속성 → 설치된 파일 → 게임 파일 무결성 확인** 을 하면 폰트까지 원래대로 돌아옵니다.
@@ -62,7 +70,9 @@ tools/
   units.py        제어 코드와 번역 단위 분리
   charmap.py      한글 ↔ Shift-JIS 슬롯 매핑
   build_font.py   폰트 생성 (Pillow, numpy, Noto Sans CJK 필요)
-  patch.py        패치 적용/제거
+  patch.py        패치 적용/제거 (--controller switch 지원)
+  switch_ui.py    스위치 Pro 컨트롤러 표기·아이콘
+  pak.py, dds.py  PC판 .pak 텍스처 묶음 / DXT5 DDS 처리
   extract.py      번역 대조표(TSV) 생성·반영
 translation/ko.json   번역문 (원문 해시 → 한국어)
 font/                 미리 생성한 폰트 + OFL 라이선스

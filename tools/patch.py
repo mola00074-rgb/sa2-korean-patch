@@ -79,21 +79,27 @@ def write_font(dst):
         build_font.main(dst)
 
 
-def run(game_dir, out_dir=None, install=False, tr_path=None):
+def run(game_dir, out_dir=None, install=False, tr_path=None, controller='xbox'):
     gd = gd_of(game_dir)
     tr = load_translations(tr_path)
+    tr_orig = tr
+    if controller == 'switch':
+        import switch_ui
+        tr = {k: switch_ui.convert_text(v) for k, v in tr.items()}
     table = charmap.build_table()
     missing = set()
     backup_root = os.path.join(game_dir, BACKUP_DIR, 'resource', 'gd_PC')
     targets = [r for r in msgfile.targets(gd) if not any(k in r for k in units.SKIP_FILES)]
     for rel in targets:
         src = os.path.join(gd, rel)
+        if not install and os.path.exists(os.path.join(backup_root, rel)):
+            src = os.path.join(backup_root, rel)
         if install:
             bak = os.path.join(backup_root, rel)
             if os.path.exists(bak):
                 src = bak                      # 이미 패치된 상태면 원본 백업에서 다시 만든다
             else:
-                if looks_patched(src, rel, tr):
+                if looks_patched(src, rel, tr_orig):
                     raise SystemExit('%s 은(는) 이미 한글 패치가 적용된 파일입니다.\n'
                                      'Steam에서 「게임 파일 무결성 확인」으로 원본을 복구한 뒤 다시 실행하세요.' % rel)
                 os.makedirs(os.path.dirname(bak), exist_ok=True)
@@ -104,6 +110,25 @@ def run(game_dir, out_dir=None, install=False, tr_path=None):
         open(dst, 'wb').write(data)
     font_dst = os.path.join(gd if install else os.path.join(out_dir, 'resource', 'gd_PC'), FONT_NAME)
     write_font(font_dst)
+    if controller == 'switch':
+        import switch_ui
+        out_gd = gd if install else os.path.join(out_dir, 'resource', 'gd_PC')
+        src_gd = backup_root if os.path.isdir(os.path.join(backup_root, 'PRS')) else gd
+        if install:
+            for pk in switch_ui.ICONS:
+                srcp = os.path.join(gd, 'PRS', pk)
+                bak = os.path.join(backup_root, 'PRS', pk)
+                if not os.path.exists(bak) and os.path.exists(srcp):
+                    os.makedirs(os.path.dirname(bak), exist_ok=True)
+                    shutil.copy2(srcp, bak)
+            src_gd = backup_root
+        done = switch_ui.patch_paks(src_gd, out_gd)
+        print('스위치 Pro 컨트롤러 아이콘 적용: %s' % ', '.join(done))
+    elif install:
+        bak_prs = os.path.join(backup_root, 'PRS')
+        if os.path.isdir(bak_prs):            # 이전에 스위치 아이콘을 적용했다면 원래 아이콘으로 되돌린다
+            for f in os.listdir(bak_prs):
+                shutil.copy2(os.path.join(bak_prs, f), os.path.join(gd, 'PRS', f))
     print('메시지 파일 %d개 패치 완료 (미번역 %d개)' % (len(targets), len(missing)))
     if install:
         print('원본 메시지 파일 백업 위치: %s' % os.path.join(game_dir, BACKUP_DIR))
@@ -134,11 +159,13 @@ def main(argv=None):
     g.add_argument('--out', help='패치된 파일을 이 폴더에 출력')
     g.add_argument('--uninstall', action='store_true', help='백업에서 원본 복원')
     ap.add_argument('--translations', help='번역 JSON 경로 (기본: translation/ko.json)')
+    ap.add_argument('--controller', choices=['xbox', 'switch'], default='xbox',
+                    help='버튼 표기: xbox(기본) 또는 switch (스위치 Pro 컨트롤러, Steam의 Nintendo 버튼 배치 사용)')
     a = ap.parse_args(argv)
     if a.uninstall:
         uninstall(a.game_dir)
     else:
-        run(a.game_dir, out_dir=a.out, install=a.install, tr_path=a.translations)
+        run(a.game_dir, out_dir=a.out, install=a.install, tr_path=a.translations, controller=a.controller)
 
 
 if __name__ == '__main__':
