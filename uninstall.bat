@@ -1,0 +1,10 @@
+@echo off
+chcp 65001 > nul
+setlocal
+set "GAME=C:\Program Files (x86)\Steam\steamapps\common\Sonic Adventure 2"
+set /p "INPUT=게임 폴더 경로 (그냥 Enter = %GAME%): "
+if not "%INPUT%"=="" set "GAME=%INPUT%"
+where py > nul 2>&1 && (set "PY=py -3") || (set "PY=python")
+%PY% "%~dp0tools\patch.py" --uninstall "%GAME%"
+echo.
+pause
